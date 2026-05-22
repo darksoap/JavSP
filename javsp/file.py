@@ -50,7 +50,6 @@ def scan_movies(root: str) -> list[Movie]:
                 if any(
                     file.lower().endswith(".nfo")
                     for file in os.listdir(os.path.join(dirpath, name))
-                    if isinstance(file, str)
                 ):
                     print(f"skip file {name}")
                     dirnames.remove(name)

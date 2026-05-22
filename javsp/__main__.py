@@ -10,6 +10,13 @@ from pydantic_extra_types.pendulum_dt import Duration
 import requests
 import threading
 
+try:
+    import curl_cffi
+
+    CURL_CFFI_AVAILABLE = True
+except ImportError:
+    CURL_CFFI_AVAILABLE = False
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 import colorama
@@ -83,37 +90,51 @@ def import_crawlers():
 # 爬虫是IO密集型任务，可以通过多线程提升效率
 def parallel_crawler(movie: Movie, tqdm_bar=None):
     """使用多线程抓取不同网站的数据"""
+    failed_crawlers = []  # (crawler_name, error_reason)
 
     def wrapper(parser, info: MovieInfo, retry):
-        """对抓取器函数进行包装，便于更新提示信息和自动重试"""
         crawler_name = threading.current_thread().name
-        task_info = f"Crawler: {crawler_name}: {info.dvdid}"
+        short_name = crawler_name.replace("javsp.web.", "")
         for cnt in range(retry):
             try:
                 parser(info)
                 movie_id = info.dvdid or info.cid
-                logger.debug(f"{crawler_name}: 抓取成功: '{movie_id}': '{info.url}'")
+                logger.debug(f"{short_name}: 抓取成功: '{movie_id}': '{info.url}'")
                 setattr(info, "success", True)
                 if isinstance(tqdm_bar, tqdm):
-                    tqdm_bar.set_description(f"{crawler_name}: 抓取完成")
+                    tqdm_bar.set_description(f"{short_name}: 抓取完成")
                 break
             except MovieNotFoundError as e:
                 logger.debug(e)
+                failed_crawlers.append((short_name, str(e)))
                 break
             except MovieDuplicateError as e:
-                logger.exception(e)
+                logger.debug(str(e))
+                failed_crawlers.append((short_name, str(e)))
                 break
             except (SiteBlocked, SitePermissionError, CredentialError) as e:
-                logger.error(e)
+                logger.warning(e)
+                failed_crawlers.append((short_name, str(e)))
                 break
             except requests.exceptions.RequestException as e:
                 logger.debug(
-                    f"{crawler_name}: 网络错误，正在重试 ({cnt + 1}/{retry}): \n{repr(e)}"
+                    f"{short_name}: 网络错误，正在重试 ({cnt + 1}/{retry}): \n{repr(e)}"
                 )
                 if isinstance(tqdm_bar, tqdm):
-                    tqdm_bar.set_description(f"{crawler_name}: 网络错误，正在重试")
+                    tqdm_bar.set_description(f"{short_name}: 网络错误，正在重试")
             except Exception as e:
-                logger.exception(e)
+                if CURL_CFFI_AVAILABLE and isinstance(
+                    e, curl_cffi.requests.exceptions.RequestException
+                ):
+                    logger.debug(
+                        f"{short_name}: 网络错误，正在重试 ({cnt + 1}/{retry}): \n{repr(e)}"
+                    )
+                    if isinstance(tqdm_bar, tqdm):
+                        tqdm_bar.set_description(f"{short_name}: 网络错误，正在重试")
+                else:
+                    logger.warning(f"{short_name}: 抓取异常: {e}", exc_info=True)
+                    failed_crawlers.append((short_name, f"{type(e).__name__}: {e}"))
+                    break
 
     # 根据影片的数据源获取对应的抓取器
     crawler_mods: list[CrawlerID] = Cfg().crawler.selection[movie.data_src]
@@ -166,6 +187,18 @@ def parallel_crawler(movie: Movie, tqdm_bar=None):
     all_info = {k: v for k, v in all_info.items() if hasattr(v, "success")}
     for info in all_info.values():
         del info.success
+
+    # 智能报错：只有全部失败才汇总输出，单源失败仅记录简要信息
+    if not all_info:
+        total = len(Cfg().crawler.selection[movie.data_src])
+        failed_list = "\n".join(
+            f"  - {name}: {reason}" for name, reason in failed_crawlers
+        )
+        logger.error(f"所有 {total} 个抓取器均失败:\n{failed_list}")
+    elif failed_crawlers:
+        failed_names = {name for name, _ in failed_crawlers}
+        logger.info(f"部分抓取器失败: {', '.join(sorted(failed_names))}")
+
     # 删除all_info中键名中的'web.'
     all_info = {k[4:]: v for k, v in all_info.items()}
     return all_info
@@ -325,13 +358,13 @@ def generate_names(movie: Movie):
     copyd = d.copy()
 
     def legalize_info():
-        if movie.save_dir != None:
+        if movie.save_dir is not None:
             movie.save_dir = legalize_path(movie.save_dir)
-        if movie.nfo_file != None:
+        if movie.nfo_file is not None:
             movie.nfo_file = legalize_path(movie.nfo_file)
-        if movie.fanart_file != None:
+        if movie.fanart_file is not None:
             movie.fanart_file = legalize_path(movie.fanart_file)
-        if movie.poster_file != None:
+        if movie.poster_file is not None:
             movie.poster_file = legalize_path(movie.poster_file)
         if d["title"] != copyd["title"]:
             logger.info(f"自动截短标题为:\n{copyd['title']}")
