@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "javsp"
-version = "0.0.0"
+version = "1.9"
 description = "汇总多站点数据的AV元数据刮削器"
 authors = ["Yuukiy <76897913+Yuukiy@users.noreply.github.com>"]
 license = "GPL-3.0-only"

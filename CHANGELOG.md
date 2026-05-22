@@ -64,3 +64,19 @@
 - 为Cloudflare拦截导致的失败请求给出提示
 - 改进T38-000系列影片的番号识别
 - msin: 站点关闭，移除相应代码及测试用例
+
+## v1.9 - 2026-05-22
+
+### Added
+- 智能错误分级报告：单源失败降级为 INFO，仅全部失败时汇总报错，curl_cffi 网络错误不再暴露 traceback
+- 支持 Python 3.14
+
+### Changed
+- 重构 `parallel_crawler` 异常处理：区分网络错误/站点封禁/影片不存在，curl_cffi 异常被正确识别并自动重试
+- 简化爬虫日志名称（`javsp.web.javlib` → `javlib`）
+
+### Fixed
+- 修复网络超时设置无效的问题：`Duration.seconds` 误用导致超时始终为 1 秒，改用 `total_seconds()`
+
+### Removed
+- airav: 站点已失效，移除爬虫及相关测试数据和工具脚本
