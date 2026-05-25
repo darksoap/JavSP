@@ -108,7 +108,7 @@ def parse_data(movie: MovieInfo):
                 parse_func(movie, html)
                 movie.url = d["url"]
                 break
-            except:
+            except Exception:
                 logger.debug(f"Fail to parse {d['url']}", exc_info=True)
                 if d is urls[-1]:
                     logger.warning(
@@ -285,4 +285,4 @@ if __name__ == "__main__":
         parse_data(movie)
         print(movie)
     except CrawlerError as e:
-        logger.error(e, exc_info=1)
+        logger.error(e, exc_info=True)

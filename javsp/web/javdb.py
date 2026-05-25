@@ -83,7 +83,7 @@ def get_user_info(site, cookies):
         html = request.get_html(f'https://{site}/users/profile')
     except Exception as e:
         logger.info('JavDB: 获取用户信息时出错')
-        logger.debug(e, exc_info=1)
+        logger.debug(e, exc_info=True)
         return
     # 扫描浏览器得到的Cookies对应的临时域名可能会过期，因此需要先判断域名是否仍然指向JavDB的站点
     if 'JavDB' in html.text:

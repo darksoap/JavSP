@@ -16,8 +16,8 @@ builtin_print = print
 def flex_print(*args, **kwargs):
     try:
         tqdm.tqdm.write(*args, **kwargs)
-    except:
-        builtin_print(*args, ** kwargs)
+    except Exception:
+        builtin_print(*args, **kwargs)
 # 替换内置的print
 inspect.builtins.print = flex_print
 

@@ -12,7 +12,7 @@ class SlimefaceCropper(Cropper):
             face = bbox_confs[0][:-1]
             poster_box = get_bound_box_by_face(face, fanart.size, ratio)
             return fanart.crop(poster_box)
-        except:
+        except Exception:
             return DefaultCropper().crop_specific(fanart, ratio)
 
 if __name__ == '__main__':

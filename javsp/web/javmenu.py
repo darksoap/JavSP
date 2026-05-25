@@ -85,4 +85,4 @@ if __name__ == "__main__":
         parse_data(movie)
         print(movie)
     except CrawlerError as e:
-        logger.error(e, exc_info=1)
+        logger.error(e, exc_info=True)

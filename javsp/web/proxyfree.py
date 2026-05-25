@@ -24,7 +24,7 @@ def get_proxy_free_url(site_name: str, prefer_url=None) -> str:
         try:
             urls = get_urls()
             return _choose_one(urls)
-        except:
+        except Exception:
             return ''
     else:
         raise Exception("Dont't know how to get proxy-free url for " + site_name)

@@ -2,12 +2,15 @@ from argparse import ArgumentParser, RawTextHelpFormatter
 from enum import Enum
 from typing import Literal, TypeAlias
 from confz import BaseConfig, CLArgSource, EnvSource, FileSource
-from pydantic import ByteSize, Field, NonNegativeInt, PositiveInt
+from pydantic import ByteSize, Field, NonNegativeInt, PositiveInt, model_validator
 from pydantic_extra_types.pendulum_dt import Duration
 from pydantic_core import Url
 from pathlib import Path
+import logging
 
 from javsp.lib import resource_path
+
+_logger = logging.getLogger(__name__)
 
 
 class Scanner(BaseConfig):
@@ -45,11 +48,52 @@ class Network(BaseConfig):
     proxy_server: Url | None
     retry: NonNegativeInt = 3
     timeout: Duration
-    proxy_free: dict[CrawlerID, Url]
+    proxy_free: dict[str, Url]
+
+    @model_validator(mode="before")
+    @classmethod
+    def filter_invalid_proxy_free(cls, data):
+        valid_keys = {e.value for e in CrawlerID}
+        if isinstance(data, dict):
+            proxy_free = data.get("proxy_free", {})
+            invalid_keys = [k for k in proxy_free if k not in valid_keys]
+            if invalid_keys:
+                _logger.warning(
+                    f"配置的免代理站点无效，已自动忽略: {', '.join(invalid_keys)}"
+                )
+                data["proxy_free"] = {
+                    k: v for k, v in proxy_free.items() if k in valid_keys
+                }
+        return data
 
 
 class CrawlerSelect(BaseConfig):
-    def items(self) -> list[tuple[str, list[CrawlerID]]]:
+    normal: list[str]
+    fc2: list[str]
+    cid: list[str]
+    getchu: list[str]
+    gyutto: list[str]
+
+    @model_validator(mode="before")
+    @classmethod
+    def filter_invalid_crawlers(cls, data):
+        valid_ids = {e.value for e in CrawlerID}
+        all_invalid = []
+        if isinstance(data, dict):
+            for attr in ("normal", "fc2", "cid", "getchu", "gyutto"):
+                original = data.get(attr, [])
+                valid = [c for c in original if c in valid_ids]
+                invalid = [c for c in original if c not in valid_ids]
+                if invalid:
+                    all_invalid.extend(invalid)
+                data[attr] = valid
+            if all_invalid:
+                _logger.warning(
+                    f"配置的抓取器无效，已自动忽略: {', '.join(all_invalid)}"
+                )
+        return data
+
+    def items(self) -> list[tuple[str, list[str]]]:
         return [
             ("normal", self.normal),
             ("fc2", self.fc2),
@@ -58,7 +102,7 @@ class CrawlerSelect(BaseConfig):
             ("gyutto", self.gyutto),
         ]
 
-    def __getitem__(self, index) -> list[CrawlerID]:
+    def __getitem__(self, index) -> list[str]:
         match index:
             case "normal":
                 return self.normal
@@ -71,12 +115,6 @@ class CrawlerSelect(BaseConfig):
             case "gyutto":
                 return self.gyutto
         raise Exception("Unknown crawler type")
-
-    normal: list[CrawlerID]
-    fc2: list[CrawlerID]
-    cid: list[CrawlerID]
-    getchu: list[CrawlerID]
-    gyutto: list[CrawlerID]
 
 
 class MovieInfoField(str, Enum):

@@ -32,7 +32,7 @@ def parse_data(movie: MovieInfo):
                 src_set_urls[width] = url
             max_pic = sorted(src_set_urls.items(), key=lambda x:x[0], reverse=True)
             movie.cover = max_pic[0][1]
-        except:
+        except Exception:
             movie.cover = cover_tag[0].get('src')
     body = html.xpath("//section[@class='article-body']")[0]
     title = body.xpath("div/p/text()")[0]
@@ -69,4 +69,4 @@ if __name__ == "__main__":
         parse_data(movie)
         print(movie)
     except CrawlerError as e:
-        logger.error(e, exc_info=1)
+        logger.error(e, exc_info=True)
