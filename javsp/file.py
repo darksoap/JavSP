@@ -43,6 +43,7 @@ def scan_movies(root: str) -> list[Movie]:
         for name in dirnames.copy():
             if ignore_folder_name_pattern.match(name):
                 dirnames.remove(name)
+                continue
             # 移除有nfo的文件夹
             if Cfg().scanner.skip_nfo_dir:
                 if any(file.lower().endswith(".nfo") for file in os.listdir(os.path.join(dirpath, name))):

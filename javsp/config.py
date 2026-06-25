@@ -1,4 +1,6 @@
 import logging
+import os
+import sys
 from argparse import ArgumentParser, RawTextHelpFormatter
 from enum import StrEnum
 from pathlib import Path
@@ -292,6 +294,28 @@ class Other(BaseConfig):
     auto_exit: bool = True
 
 
+def _find_user_config() -> str | None:
+    """查找用户配置文件 config.yml
+
+    查找顺序（命中即返回）：
+    1. 当前工作目录（CWD）：便于 pip 安装后用户在任意运行目录放置 config.yml
+    2. 可执行文件所在目录（仅 frozen 模式，即 cx_Freeze 打包后）
+    3. 源码根目录（开发模式 -e 安装时从仓库根目录读取）
+
+    这样可以让用户配置文件"放在外面"，而不是被锁在 site-packages 内部。
+    """
+    candidates = [os.getcwd()]
+    if getattr(sys, "frozen", False):
+        candidates.append(os.path.dirname(sys.executable))
+    # 开发模式回退：源码根目录（javsp 包的上一级）
+    candidates.append(str(Path(__file__).resolve().parent.parent))
+    for dir_path in candidates:
+        candidate = os.path.join(dir_path, USER_CONFIG_FILE)
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
 def get_config_source():
     """构建配置源列表，使用缓存避免重复计算
 
@@ -314,7 +338,7 @@ def get_config_source():
     args, _ = parser.parse_known_args()
     sources = []
 
-    # 1. 始终加载默认模板配置
+    # 1. 始终加载默认模板配置（已随 wheel 打包到 site-packages 根目录）
     default_config = resource_path(DEFAULT_CONFIG_FILE)
     sources.append(FileSource(file=default_config))
 
@@ -322,8 +346,8 @@ def get_config_source():
     if args.config is not None:
         sources.append(FileSource(file=args.config))
     else:
-        user_config = resource_path(USER_CONFIG_FILE)
-        if Path(user_config).exists():
+        user_config = _find_user_config()
+        if user_config is not None:
             try:
                 with open(user_config, encoding="utf-8") as f:
                     if yaml.safe_load(f) is not None:

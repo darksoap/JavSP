@@ -24,7 +24,7 @@ def write_nfo(info: MovieInfo, nfo_file):
 
     # Kodi的文档中评分支持多个来源，但经测试，添加了多个评分时Kodi也只显示了第一个评分
     if info.score:
-        nfo.append(E.rating(info.score))
+        nfo.append(E.rating(str(info.score)))
 
     # 目前没有合适的字段用于outline（一行简短的介绍），力求不在nfo中写入冗余的信息，因此不添加outline标签
     # 而且无论是Kodi还是Jellyfin中都没有找到实际显示outline的位置；tagline倒是都有发现
@@ -51,28 +51,26 @@ def write_nfo(info: MovieInfo, nfo_file):
     if info.cid:
         nfo.append(E.uniqueid(info.cid, type="cid"))
 
-    # 选择要写入的genre数据源字段：将[]作为后备结果，以确保genre结果为None时后续不会抛出异常
-    for genre_item in (info.genre_norm, info.genre, []):
-        if genre_item:
-            break
+    def _clean_tags(items):
+        """清洗标签：去空白、过滤空值、展开逗号分隔、保持顺序去重"""
+        result = []
+        for item in items:
+            for part in str(item).split(","):
+                part = part.strip()
+                if part and part not in result:
+                    result.append(part)
+        return result
 
-    genre = genre_item.copy()
-    # 添加自定义分类
-    for genre_new in Cfg().summarizer.nfo.custom_genres_fields:
-        genre.append(genre_new.format(**dic))
-    # 分类去重
-    genre = list(set(genre))
-    # 写入genre分类：优先使用genre_norm。在Jellyfin上，只有genre可以直接跳转，tag不可以
-    # 也同时写入tag。TODO: 还没有研究tag和genre在Kodi上的区别
+    # genre 仅来自用户自定义分类配置，网站原始类别统一进入 tag
+    genre = _clean_tags(g.format(**dic) for g in Cfg().summarizer.nfo.custom_genres_fields)
+    # 写入genre分类。在Jellyfin上，只有genre可以直接跳转，tag不可以
     for i in genre:
         nfo.append(E.genre(i))
 
-    tags = []
-    # 添加自定义tag
-    for tag_new in Cfg().summarizer.nfo.custom_tags_fields:
-        tags.append(tag_new.format(**dic))
-    # 去重
-    tags = list(set(tags))
+    # tag 包含网站原始类别（优先使用归一化后的类别）和自定义 tag
+    site_tags = info.genre_norm if info.genre_norm else info.genre if info.genre else []
+    custom_tags = (t.format(**dic) for t in Cfg().summarizer.nfo.custom_tags_fields)
+    tags = _clean_tags([*site_tags, *custom_tags])
     # 写入tag
     for i in tags:
         nfo.append(E.tag(i))
@@ -121,6 +119,5 @@ def write_nfo(info: MovieInfo, nfo_file):
 
 
 if __name__ == "__main__":
-
     info = MovieInfo(from_file=R"unittest\data\IPX-177 (javbus).json")
     write_nfo(info)

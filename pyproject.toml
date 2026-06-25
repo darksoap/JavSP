@@ -56,6 +56,20 @@ raw-options = {local_scheme = "no-local-version"}
 [tool.hatch.build.targets.wheel]
 packages = ["javsp"]
 
+# 将项目根目录下的静态资源打包到 wheel 根目录（安装后位于 site-packages/ 根下）
+# 这样 resource_path() 在非 frozen 模式下返回的 Path(__file__).parent.parent / path 即可命中
+# 注意：config.yml 为用户配置文件，不在此处打包，由程序在运行目录（CWD/可执行文件目录）查找
+[tool.hatch.build.targets.wheel.force-include]
+"image" = "image"
+"data" = "data"
+"config_default.yml" = "config_default.yml"
+
+# sdist 也包含这些静态资源，保证源码包完整
+[tool.hatch.build.targets.sdist.force-include]
+"image" = "image"
+"data" = "data"
+"config_default.yml" = "config_default.yml"
+
 # ----- uv 解析配置 -----
 # 本地开发可取消注释使用清华源加速；CI 环境在海外，默认使用 PyPI
 # [[tool.uv.index]]

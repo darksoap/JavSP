@@ -32,7 +32,9 @@ scanner:
   # 匹配番号时忽略小于指定大小的文件
   # 格式要求：https://docs.pydantic.dev/2.0/usage/types/bytesize/
   minimum_size: 232MiB
+  # 扫描时是否跳过已存在NFO文件的文件夹（yes/true: 跳过）
   skip_nfo_dir: yes
+  # 是否启用手动模式：扫描完成后逐部人工确认/更正番号
   manual: yes
 ################################
 network:
@@ -42,12 +44,13 @@ network:
   # 各个站点的免代理地址。地址失效时软件会自动尝试获取新地址，你也可以手动设置
   proxy_free:
     avsox: 'https://avsox.click'
-    javbus: 'https://www.seedmm.help'
+    javbus: 'https://www.seejav.cyou'
     javdb: 'https://javdb368.com'
     javlib: 'https://www.c97k.com'
   # 网络问题导致抓取数据失败时的重试次数，通常3次就差不多了
   retry: 3
-  # https://en.wikipedia.org/wiki/ISO_8601#Durations
+  # 单次网络请求的超时时间
+  # 格式要求：https://en.wikipedia.org/wiki/ISO_8601#Durations
   timeout: PT10S
 
 ################################
@@ -124,10 +127,13 @@ summarizer:
     # nfo文件中的影片标题（即媒体管理工具中显示的标题）
     title_pattern: '{num} {title}'
     # 要添加到自定义分类的字段，空列表表示不添加
-    custom_genres_fields: ['{genre}', '{censor}']
+    # 网站原始类别默认进入 tag，此处建议只放 {censor} 等少量自定义分类
+    custom_genres_fields: ['{censor}']
     # 要添加到自定义标签的字段，空列表表示不添加
-    custom_tags_fields: ['{genre}', '{censor}']
-  # 依次设置 已知无码/已知有码/不确定 这三种情况下 {censor} 对应的文本(可以利用此变量将有码/无码影片整理到不同文件夹)
+    # 网站原始类别已自动进入 tag，无需再在此处添加 {genre}
+    custom_tags_fields: ['{censor}']
+  # 依次设置 无码/有码 两种情况下 {censor} 对应的文本（可以利用此变量将有码/无码影片整理到不同文件夹）
+  # 注意：当前程序根据影片信息只区分有码/无码两种状态，未使用第三个值
   censor_options_representation: ['无码', '有码', '打码情况未知']
 
   cover:
@@ -161,7 +167,7 @@ summarizer:
   extra_fanarts:
     # 是否下载剧照？
     enabled: true
-    # 间隔的两次封面爬取请求之间应该间隔多久
+    # 连续下载两张剧照之间的间隔时间
     scrap_interval: PT1.5S
 
 ################################

@@ -63,13 +63,14 @@ def detect_special_attr(filepath: str, avid: str = None) -> str:
         result += "U"
     # 尝试匹配-C/-U/-UC后缀的影片
     postfix = base.split("-")[-1]
-    if postfix in ("U", "C", "UC"):
-        result += postfix
+    if postfix in ("U", "C", "UC", "CH"):
+        result += "C" if postfix == "CH" else postfix
     elif avid:
-        pattern_str = re.sub(r"[_-]", "[_-]*", avid) + r"(UC|U|C)\b"
+        pattern_str = re.sub(r"[_-]", "[_-]*", avid) + r"(UC|U|C|CH)\b"
         match = re.search(pattern_str, base, flags=re.I)
         if match:
-            result += match.group(1)
+            attr = match.group(1)
+            result += "C" if attr.upper() == "CH" else attr
     # 最终格式化
     result = "".join(sorted(set(result), reverse=True))
     return result

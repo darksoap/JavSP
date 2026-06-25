@@ -20,3 +20,8 @@ def test_detect_special_attr():
     assert run("STARS225uC.mp4", "STARS-225") == "UC"
     assert run("STARS-225CD1.mp4", "STARS-225") == ""
     assert run("stars225cd2.mp4", "STARS-225") == ""
+    # ch后缀（中文字幕标记，等同于C）
+    assert run("IPX-177-CH.mp4") == "C"
+    assert run("IPX-177ch.mp4", "IPX-177") == "C"
+    assert run("IPX177ch.mp4", "IPX-177") == "C"
+    assert run("STARS-225-CH-C.mp4") == "C"

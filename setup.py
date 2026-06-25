@@ -8,12 +8,23 @@ base = None
 proj_root = os.path.abspath(os.path.dirname(__file__))
 
 
-include_files: list[tuple[str, str]] = [
-    (f"{proj_root}/config_default.yml", "config_default.yml"),
-    (f"{proj_root}/config.yml", "config.yml"),
-    (f"{proj_root}/data", "data"),
-    (f"{proj_root}/image", "image"),
-]
+include_files: list[tuple[str, str]] = []
+
+# 默认模板配置（随包发布）
+_default_cfg = f"{proj_root}/config_default.yml"
+if os.path.exists(_default_cfg):
+    include_files.append((_default_cfg, "config_default.yml"))
+
+# 用户配置（可选，存在才打包到产物目录）
+_user_cfg = f"{proj_root}/config.yml"
+if os.path.exists(_user_cfg):
+    include_files.append((_user_cfg, "config.yml"))
+
+# 静态资源目录
+for _sub in ("data", "image"):
+    _sub_dir = f"{proj_root}/{_sub}"
+    if os.path.isdir(_sub_dir):
+        include_files.append((_sub_dir, _sub))
 
 # 如果有 VERSION 文件（CI 构建时写入），将其打入产物以支持版本识别
 version_file_src = f"{proj_root}/javsp/VERSION"

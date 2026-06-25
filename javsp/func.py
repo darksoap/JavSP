@@ -65,19 +65,25 @@ def select_folder(default_dir=""):
 def get_scan_dir(cfg_scan_dir: Path | None) -> str | None:
     """综合命令参数、配置文件等信息，返回要扫描影片的文件夹"""
     # 目前config模块负责处理来自命令行和来自文件的配置，cfg_scan_dir已经是综合了这两处后得到的结果
-    if cfg_scan_dir:
-        if cfg_scan_dir.exists():
-            return str(cfg_scan_dir)
-        else:
-            logger.error(f"配置的待整理文件夹无效：'{cfg_scan_dir}'")
-    else:
+    if cfg_scan_dir and cfg_scan_dir.exists():
+        return str(cfg_scan_dir)
+
+    if cfg_scan_dir and not cfg_scan_dir.exists():
+        logger.warning(f"配置的待整理文件夹不存在：'{cfg_scan_dir}'")
         if sys.platform == "win32":
-            print("请选择要整理的文件夹：", end="")
-            root = select_folder()
-        else:
-            root = prompt("请选择要整理的文件夹路径，必须是绝对路径: ", "要整理的文件夹")
-        print(root)
-        return root
+            logger.warning(
+                "如果使用了网络映射驱动器（如Z:\\），程序以管理员权限运行时将无法访问映射驱动器。\n"
+                "请尝试以非管理员权限运行，或直接使用UNC路径（\\\\服务器\\共享\\文件夹）代替映射驱动器路径"
+            )
+
+    # 回退到交互式选择
+    if sys.platform == "win32":
+        print("请选择要整理的文件夹：", end="")
+        root = select_folder(str(cfg_scan_dir) if cfg_scan_dir else "")
+    else:
+        root = prompt("请选择要整理的文件夹路径，必须是绝对路径: ", "要整理的文件夹")
+    print(root)
+    return root
 
 
 def remove_trail_actor_in_title(title: str, actors: list) -> str:

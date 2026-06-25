@@ -360,7 +360,17 @@ class GenreMap(dict):
             reader = csv.DictReader(csvfile)
             try:
                 for row in reader:
-                    genres[row["id"]] = row["translate"]
+                    # 优先使用 zh_cn 作为翻译结果，否则回退 translate 列
+                    translate = row.get("zh_cn") or row.get("translate")
+                    if not translate:
+                        continue
+                    # 支持多列作为映射键（id、繁中、日文等），zh_cn 仅作为翻译输出不作为键
+                    for key in ("id", "zh_tw", "ja"):
+                        if row.get(key):
+                            for value in row[key].split(","):
+                                value = value.strip()
+                                if value:
+                                    genres[value] = translate
             except UnicodeDecodeError:
                 logger.error("CSV file must be saved as UTF-8-BOM to edit is in Excel")
             except KeyError:
@@ -371,4 +381,5 @@ class GenreMap(dict):
         """将列表ls按照内置的映射进行替换：保留映射表中不存在的键，删除值为空的键"""
         mapped = [self.get(i, i) for i in ls]
         cleaned = [i for i in mapped if i]  # 译文为空表示此genre应当被删除
-        return cleaned
+        # 保持顺序去重
+        return list(dict.fromkeys(cleaned))

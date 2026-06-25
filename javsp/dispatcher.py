@@ -16,7 +16,7 @@ except ImportError:
     CURL_CFFI_AVAILABLE = False
 
 from javsp.config import Cfg
-from javsp.datatype import Movie, MovieInfo
+from javsp.datatype import GenreMap, Movie, MovieInfo
 from javsp.web.exceptions import (
     CredentialError,
     MovieDuplicateError,
@@ -139,8 +139,22 @@ def parallel_crawler(movie: Movie, tqdm_bar=None):
         raise Exception(f"所有 {total} 个抓取器均失败 ({movie_id}):\n{failed_list}")
     elif failed_crawlers:
         failed_names = {name for name, _ in failed_crawlers}
-        logger.info(f"部分抓取器失败: {', '.join(sorted(failed_names))}")
+        logger.info(f"部分抓取器失败: {', '.join(sorted(failed_names))}")  # 抓取失败名单
 
     # 删除all_info中键名中的'javsp.web.'前缀
     all_info = {k.replace("javsp.web.", ""): v for k, v in all_info.items()}
+    # 对各来源的genre进行归一化：优先使用已有的genre_norm，否则根据站点genre_id做映射
+    genre_maps = {}
+    for name, info in all_info.items():
+        if info.genre_norm:
+            continue
+        if not info.genre_id and not info.genre:
+            continue
+        try:
+            genre_map = genre_maps.setdefault(name, GenreMap(f"data/genre_{name}.csv"))
+        except FileNotFoundError:
+            logger.debug(f"'{name}' 缺少 genre 映射表，跳过归一化")
+            continue
+        ids = info.genre_id if info.genre_id else info.genre
+        info.genre_norm = genre_map.map(ids)
     return all_info
