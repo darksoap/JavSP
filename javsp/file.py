@@ -39,16 +39,29 @@ def scan_movies(root: str) -> list[Movie]:
     dic = {}  # avid: [abspath1, abspath2...]
     small_videos = {}
     ignore_folder_name_pattern = re.compile("|".join(Cfg().scanner.ignored_folder_name_pattern))
+    skip_nfo = Cfg().scanner.skip_nfo_dir
+
     for dirpath, dirnames, filenames in os.walk(root):
-        for name in dirnames.copy():
+        filtered_dirs = []
+        for name in dirnames:
             if ignore_folder_name_pattern.match(name):
-                dirnames.remove(name)
                 continue
-            # 移除有nfo的文件夹
-            if Cfg().scanner.skip_nfo_dir:
-                if any(file.lower().endswith(".nfo") for file in os.listdir(os.path.join(dirpath, name))):
+
+            if skip_nfo:
+                target_path = os.path.join(dirpath, name)
+                try:
+                    has_nfo = any(f.lower().endswith(".nfo") for f in os.listdir(target_path))
+                except OSError as e:
+                    logger.debug(f"无法访问文件夹，已跳过: {target_path} ({e})")
+                    has_nfo = False
+
+                if has_nfo:
                     logger.info(f"跳过已有NFO的文件夹: {name}")
-                    dirnames.remove(name)
+                    continue
+
+            filtered_dirs.append(name)
+
+        dirnames[:] = filtered_dirs
 
         for file in filenames:
             ext = os.path.splitext(file)[1].lower()
