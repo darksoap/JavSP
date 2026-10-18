@@ -11,8 +11,6 @@ import curl_cffi
 import lxml.html
 import requests
 from curl_cffi import requests as curl_requests
-from lxml import etree
-from lxml.html.clean import Cleaner
 from requests.models import Response
 from tqdm import tqdm
 
@@ -43,8 +41,6 @@ headers = {
 }
 
 logger = logging.getLogger(__name__)
-# 删除js脚本相关的tag，避免网页检测到没有js运行环境时强行跳转，影响调试
-cleaner = Cleaner(kill_tags=["script", "noscript"])
 
 
 def is_cloudflare_challenge(resp) -> bool:
@@ -248,15 +244,6 @@ def post_html(url, data, encoding="utf-8", cookies=None):
     # html = cleaner.clean_html(html)
     # lxml.html.open_in_browser(html, encoding=encoding)  # for develop and debug
     return html
-
-
-def dump_xpath_node(node, filename=None):
-    """将xpath节点dump到文件"""
-    if not filename:
-        filename = node.tag + ".html"
-    with open(filename, "w", encoding="utf-8") as f:
-        content = etree.tostring(node, pretty_print=True).decode("utf-8")
-        f.write(content)
 
 
 def get_list_first(lst: list):

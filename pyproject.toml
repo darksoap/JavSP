@@ -20,9 +20,8 @@ dependencies = [
     "tqdm>=4.67",
     # https://stackoverflow.com/questions/446209/possible-values-from-sys-platform
     "pywin32>=311; sys_platform == 'win32'",
-    "cryptography>=48.0",
     "pycryptodome>=3.20.0",
-    "lxml[html-clean]>=6.0",
+    "lxml>=6.0",
     "confz>=2.0.1",
     "pydantic-extra-types>=2.9.0",
     "pendulum>=3.2.0",

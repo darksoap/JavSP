@@ -163,15 +163,6 @@ class MovieInfo(BaseModel):
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(self.model_dump_json(indent=2))
 
-    def load(self, filepath) -> None:
-        """从 JSON 文件加载数据并更新当前实例（已弃用，建议直接使用 MovieInfo(from_file=...)）"""
-        with open(filepath, encoding="utf-8") as f:
-            d = json.load(f)
-        # 只更新模型中已定义的字段
-        for k, v in d.items():
-            if k in self.model_fields:
-                setattr(self, k, v)
-
     def get_info_dic(self) -> dict[str, str]:
         """生成用来填充模板的字典"""
         info = self

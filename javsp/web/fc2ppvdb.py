@@ -50,7 +50,6 @@ def parse_data(movie: MovieInfo):
     uncensored_str = container.xpath(XP["mosaic"])
     uncensored_str_f = get_list_first(uncensored_str)
     uncensored = True if uncensored_str_f == "無" else False if uncensored_str_f == "有" else None
-    preview_pics = None
     preview_video = container.xpath(XP["preview_video"])
 
     movie.dvdid = id_uc
@@ -64,7 +63,6 @@ def parse_data(movie: MovieInfo):
     movie.publish_date = get_list_first(publish_date)
     movie.publisher = get_list_first(publisher)
     movie.uncensored = uncensored
-    movie.preview_pics = preview_pics
     movie.preview_video = get_list_first(preview_video)
 
     # FC2的封面是220x220的，和正常封面尺寸、比例都差太多。如果有预览图片，则使用第一张预览图作为封面

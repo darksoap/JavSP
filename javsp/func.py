@@ -32,7 +32,6 @@ __all__ = [
     "select_folder",
     "get_scan_dir",
     "remove_trail_actor_in_title",
-    "shutdown",
     "CLEAR_LINE",
     "check_update",
     "split_by_punc",
@@ -101,21 +100,6 @@ def remove_trail_actor_in_title(title: str, actors: list) -> str:
         return match.group(1)
     else:
         return title
-
-
-def shutdown(timeout=120):
-    """关闭计算机"""
-    if sys.platform != "win32":
-        logger.warning("自动关机功能仅支持Windows平台")
-        return
-    try:
-        for i in reversed(range(timeout)):
-            print(CLEAR_LINE + f"JavSP整理完成，将在 {i} 秒后关机。按'Ctrl+C'取消", end="")
-            time.sleep(1)
-        logger.info("整理完成，自动关机")
-        os.system("shutdown -s")
-    except KeyboardInterrupt:
-        return
 
 
 def utc2local(utc_str):

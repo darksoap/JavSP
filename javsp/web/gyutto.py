@@ -91,11 +91,6 @@ def parse_data(movie: MovieInfo):
     movie.genre = genre if genre else None
     movie.publish_date = publish_date
     movie.plot = plot
-    # movie.actress = actress
-    # movie.duration = duration
-    movie.publish_date = publish_date
-    movie.genre = genre
-    movie.plot = plot
 
 
 if __name__ == "__main__":

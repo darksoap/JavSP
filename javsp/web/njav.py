@@ -64,11 +64,7 @@ def parse_data(movie: MovieInfo):
     real_id = None
     publish_date = None
     duration_str = None
-    uncensored = None
-    preview_pics = None
-    preview_video = None
     serial = None
-    publisher = None
     producer = None
     genre = []
     actress = []
@@ -114,11 +110,7 @@ def parse_data(movie: MovieInfo):
     if duration_str:
         movie.duration = str(strftime_to_minutes(duration_str))
     movie.publish_date = publish_date
-    movie.publisher = publisher
     movie.producer = producer
-    movie.uncensored = uncensored
-    movie.preview_pics = preview_pics
-    movie.preview_video = preview_video
     movie.plot = plot
     movie.serial = serial
     movie.magnet = magnet

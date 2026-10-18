@@ -1,9 +1,9 @@
 import os
+from unittest.mock import patch
 
 import pytest
 
 from javsp.datatype import Movie
-from javsp.file import find_matching_subtitles
 
 DEFAULT_SIZE = 512 * 2**20  # 512 MiB
 
@@ -12,40 +12,6 @@ def touch_file_size(path, size_bytes):
     with open(path, "wb") as f:
         f.seek(size_bytes - 1)
         f.write(b"\0")
-
-
-# ===================== find_matching_subtitles =====================
-
-
-@pytest.mark.parametrize(
-    "names, sub_ext",
-    [
-        (("IPZ-380.mp4", "IPZ-380.srt"), ".srt"),
-        (("IPZ-380.mp4", "IPZ-380.ass"), ".ass"),
-    ],
-)
-def test_find_subtitle_exist(names, sub_ext, tmp_path):
-    for name in names:
-        touch_file_size(os.path.join(tmp_path, name), 1024)
-    subtitles = find_matching_subtitles(os.path.join(tmp_path, names[0]))
-    assert len(subtitles) == 1
-    assert subtitles[0].endswith(sub_ext)
-
-
-def test_find_subtitle_multiple_formats(tmp_path):
-    touch_file_size(os.path.join(tmp_path, "IPZ-380.mp4"), 1024)
-    touch_file_size(os.path.join(tmp_path, "IPZ-380.srt"), 1024)
-    touch_file_size(os.path.join(tmp_path, "IPZ-380.ass"), 1024)
-    subtitles = find_matching_subtitles(os.path.join(tmp_path, "IPZ-380.mp4"))
-    assert len(subtitles) == 2
-    basenames = {os.path.basename(s) for s in subtitles}
-    assert basenames == {"IPZ-380.srt", "IPZ-380.ass"}
-
-
-def test_find_subtitle_nonexist(tmp_path):
-    touch_file_size(os.path.join(tmp_path, "IPZ-380.mp4"), 1024)
-    subtitles = find_matching_subtitles(os.path.join(tmp_path, "IPZ-380.mp4"))
-    assert len(subtitles) == 0
 
 
 # ===================== Movie.rename_files 字幕移动 =====================
@@ -61,6 +27,40 @@ def _setup_scene(tmp_path, video, subtitle=None):
     if subtitle:
         touch_file_size(src / subtitle, 1024)
     return src, dst
+
+
+# ----- 有影片时才检查字幕（match_subtitles 配置） -----
+
+
+def test_subtitle_skipped_when_config_disabled(tmp_path):
+    """match_subtitles=False 时，字幕文件不应被移动"""
+    src, dst = _setup_scene(tmp_path, "IPZ-380.mp4", "IPZ-380.srt")
+    movie = Movie("IPZ-380")
+    movie.files = [str(src / "IPZ-380.mp4")]
+    movie.save_dir = str(dst)
+    movie.basename = "IPZ-380"
+    with patch("javsp.datatype.Cfg") as mock_cfg:
+        mock_cfg.return_value.summarizer.match_subtitles = False
+        movie.rename_files()
+    assert (dst / "IPZ-380.mp4").exists()
+    # 字幕未被移动，仍留在源目录
+    assert (src / "IPZ-380.srt").exists()
+    assert not (dst / "IPZ-380.srt").exists()
+
+
+def test_subtitle_not_moved_when_no_subtitle_file(tmp_path):
+    """目录中无字幕文件时，只移动视频"""
+    src, dst = _setup_scene(tmp_path, "IPZ-380.mp4")
+    movie = Movie("IPZ-380")
+    movie.files = [str(src / "IPZ-380.mp4")]
+    movie.save_dir = str(dst)
+    movie.basename = "IPZ-380"
+    movie.rename_files()
+    assert (dst / "IPZ-380.mp4").exists()
+    assert len(os.listdir(dst)) == 1
+
+
+# ----- 番号匹配 -----
 
 
 def test_rename_files_exact_match(tmp_path):

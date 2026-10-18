@@ -1,6 +1,5 @@
 """与文件相关的各类功能"""
 
-import ctypes
 import itertools
 import logging
 import os
@@ -12,13 +11,10 @@ __all__ = [
     "get_fmt_size",
     "get_remaining_path_len",
     "replace_illegal_chars",
-    "get_failed_when_scan",
-    "find_subtitle_in_dir",
-    "find_matching_subtitles",
 ]
 
 
-from javsp.avid import get_cid, get_id, guess_av_type, normalize_id
+from javsp.avid import get_cid, get_id, guess_av_type
 from javsp.config import Cfg
 from javsp.datatype import Movie
 from javsp.lib import re_escape
@@ -178,11 +174,6 @@ def scan_movies(root: str) -> list[Movie]:
     return movies
 
 
-def get_failed_when_scan():
-    """获取扫描影片过程中无法自动识别番号的条目"""
-    return failed_items
-
-
 _PARDIR_REPLACE = re.compile(r"\.{2,}")
 
 
@@ -215,17 +206,6 @@ def replace_illegal_chars(name):
     return name
 
 
-def is_remote_drive(path: str):
-    """判断一个路径是否为远程映射到本地"""
-    # TODO: 当前仅支持Windows平台
-    if platform != "win32":
-        return False
-    DRIVE_REMOTE = 0x4
-    drive = os.path.splitdrive(os.path.abspath(path))[0] + os.sep
-    result = ctypes.windll.kernel32.GetDriveTypeW(drive)
-    return result == DRIVE_REMOTE
-
-
 def get_remaining_path_len(path):
     """计算当前系统支持的最大路径长度与给定路径长度的差值"""
     # TODO: 支持不同的操作系统
@@ -255,44 +235,6 @@ def get_fmt_size(file_or_size) -> str:
         if abs(size) < 1023.995:
             return f"{size:3.2f} {unit}B"
         size /= 1024.0
-
-
-_sub_files = {}
-SUB_EXTENSIONS = (".srt", ".ass")
-
-
-def find_subtitle_in_dir(folder: str, dvdid: str):
-    """在folder内寻找是否有匹配dvdid的字幕（使用归一化匹配，IPZ-380 == ipz380 == ipz00380）"""
-    norm_target = normalize_id(dvdid)
-    if not norm_target:
-        return None
-    folder_data = _sub_files.get(folder)
-    if folder_data is None:
-        # 此文件夹从未检查过时
-        folder_data = {}
-        for dirpath, dirnames, filenames in os.walk(folder):
-            for file in filenames:
-                basename, ext = os.path.splitext(file)
-                if ext in SUB_EXTENSIONS:
-                    match_id = get_id(basename)
-                    if match_id:
-                        # 使用归一化番号作为 key，支持模糊匹配
-                        folder_data[normalize_id(match_id)] = os.path.join(dirpath, file)
-        _sub_files[folder] = folder_data
-    sub_file = folder_data.get(norm_target)
-    return sub_file
-
-
-def find_matching_subtitles(video_path: str) -> list[str]:
-    """在视频文件同目录下查找与视频文件同名的字幕文件"""
-    dir = os.path.dirname(video_path)
-    basename = os.path.splitext(os.path.basename(video_path))[0]
-    subtitles = []
-    for ext in SUB_EXTENSIONS:
-        sub_path = os.path.join(dir, basename + ext)
-        if os.path.exists(sub_path):
-            subtitles.append(sub_path)
-    return subtitles
 
 
 if __name__ == "__main__":
