@@ -8,7 +8,13 @@ from javsp.web.base import get_html, xpath_first
 from javsp.web.exceptions import CrawlerError, MovieNotFoundError
 
 logger = logging.getLogger(__name__)
-base_url = str(Cfg().network.proxy_free[CrawlerID.avsox])
+# avsox 的主域名可直接访问，无论是否配代理都用同一主域；此处与 javbus/javdb 保持相同写法，
+# 并对缺失的 proxy_free 条目做兜底（注意 base_url 需以 '/' 结尾，下方拼接依赖此）
+permanent_url = "https://avsox.click/"
+if Cfg().network.proxy_server is not None:
+    base_url = permanent_url
+else:
+    base_url = str(Cfg().network.proxy_free.get(CrawlerID.avsox, permanent_url))
 
 _SITE = "avsox"
 

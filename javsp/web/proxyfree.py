@@ -42,19 +42,6 @@ def _choose_one(urls) -> str:
     return urls[0] if urls else ""
 
 
-def _get_avsox_urls() -> list:
-    html = get_html("https://tellme.pw/avsox")
-    urls = html.xpath("//h4/strong/a/@href")
-    return urls
-
-
-def _get_javbus_urls() -> list:
-    html = get_html("https://www.javbus.one/")
-    text = html.text_content()
-    urls = re.findall(r"防屏蔽地址：(https://(?:[\d\w][-\d\w]{1,61}[\d\w]\.){1,2}[a-z]{2,})", text, re.I | re.A)
-    return urls
-
-
 def _get_javlib_urls() -> list:
     # 固定的官方/备用域名，作为 bio 解析失败时的兜底
     fallback_urls = ["https://www.javlibrary.com"]

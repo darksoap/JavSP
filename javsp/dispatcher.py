@@ -1,6 +1,7 @@
 """爬虫调度：导入爬虫模块、并行抓取"""
 
 import logging
+import random
 import sys
 import threading
 import time
@@ -26,6 +27,22 @@ from javsp.web.exceptions import (
 )
 
 logger = logging.getLogger(__name__)
+
+# 网络错误重试的退避参数（指数退避 + 抖动，单位：秒）
+_RETRY_BASE_DELAY = 1.0
+_RETRY_MAX_DELAY = 8.0
+
+
+def _retry_backoff(attempt: int) -> float:
+    """第 attempt 次（从 0 开始）重试前应等待的退避时长：指数增长并叠加随机抖动"""
+    delay = min(_RETRY_BASE_DELAY * (2**attempt), _RETRY_MAX_DELAY)
+    return delay + random.uniform(0, delay * 0.5)
+
+
+def _wait_before_retry(attempt: int, retry: int):
+    """网络错误后按退避等待；已是最后一次尝试则不再等待"""
+    if attempt < retry - 1:
+        time.sleep(_retry_backoff(attempt))
 
 
 def import_crawlers():
@@ -73,11 +90,13 @@ def parallel_crawler(movie: Movie, tqdm_bar=None):
                 logger.debug(f"{short_name}: 网络错误，正在重试 ({cnt + 1}/{retry}): \n{repr(e)}")
                 if tqdm_bar is not None and hasattr(tqdm_bar, "set_description"):
                     tqdm_bar.set_description(f"{short_name}: 网络错误，正在重试")
+                _wait_before_retry(cnt, retry)
             except Exception as e:
                 if CURL_CFFI_AVAILABLE and isinstance(e, curl_cffi.requests.exceptions.RequestException):
                     logger.debug(f"{short_name}: 网络错误，正在重试 ({cnt + 1}/{retry}): \n{repr(e)}")
                     if tqdm_bar is not None and hasattr(tqdm_bar, "set_description"):
                         tqdm_bar.set_description(f"{short_name}: 网络错误，正在重试")
+                    _wait_before_retry(cnt, retry)
                 else:
                     logger.warning(f"{short_name}: 抓取异常: {e}", exc_info=True)
                     failed_crawlers.append((short_name, f"{type(e).__name__}: {e}"))
@@ -107,7 +126,9 @@ def parallel_crawler(movie: Movie, tqdm_bar=None):
         th.start()
         thread_pool.append(th)
     # 等待所有线程结束
-    timeout = Cfg().network.retry * Cfg().network.timeout.total_seconds()
+    # 预留网络超时与重试退避的时间预算，避免线程仍在退避等待时被提前 join 超时放弃
+    per_attempt_budget = Cfg().network.timeout.total_seconds() + _RETRY_MAX_DELAY * 1.5
+    timeout = Cfg().network.retry * per_attempt_budget
     deadline = time.monotonic() + timeout
     for th in thread_pool:
         th: threading.Thread
