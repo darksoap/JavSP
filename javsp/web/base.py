@@ -20,7 +20,6 @@ from javsp.web.exceptions import CrawlerError
 __all__ = [
     "Request",
     "get_html",
-    "post_html",
     "request_get",
     "resp2html",
     "is_cloudflare_challenge",
@@ -190,11 +189,6 @@ def request_get(url, cookies=None, timeout=None, delay_raise=False):
     return Request().get(url, cookies=cookies, timeout=timeout, delay_raise=delay_raise)
 
 
-def request_post(url, data, cookies=None, timeout=None, delay_raise=False):
-    """向指定url发送post请求"""
-    return Request().post(url, data, cookies=cookies, timeout=timeout, delay_raise=delay_raise)
-
-
 def get_resp_text(resp: Response, encoding=None):
     """提取Response的文本"""
     if encoding:
@@ -225,24 +219,6 @@ def resp2html(resp, encoding="utf-8") -> lxml.html.HtmlElement:
     # html = cleaner.clean_html(html)
     if hasattr(sys, "javsp_debug_mode"):
         lxml.html.open_in_browser(html, encoding=encoding)  # for develop and debug
-    return html
-
-
-def post_html(url, data, encoding="utf-8", cookies=None):
-    """使用post方法访问指定网页并返回经lxml解析后的document"""
-    resp = request_post(url, data, cookies=cookies)
-    text = get_resp_text(resp, encoding=encoding)
-    html = lxml.html.fromstring(text)
-    # jav321提供ed2k形式的资源链接，其中的非ASCII字符可能导致转换失败，因此要先进行处理
-    ed2k_tags = html.xpath("//a[starts-with(@href,'ed2k://')]")
-    for tag in ed2k_tags:
-        tag.attrib["ed2k"], tag.attrib["href"] = tag.attrib["href"], ""
-    html.make_links_absolute(url, resolve_base_href=True)
-    for tag in ed2k_tags:
-        tag.attrib["href"] = tag.attrib["ed2k"]
-        tag.attrib.pop("ed2k")
-    # html = cleaner.clean_html(html)
-    # lxml.html.open_in_browser(html, encoding=encoding)  # for develop and debug
     return html
 
 

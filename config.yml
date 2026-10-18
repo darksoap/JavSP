@@ -58,7 +58,7 @@
 #     命中时会返回干净的"站点被屏蔽"提示。若日后接入真实浏览器方案，可手动将 javbus 加回列表。
 #crawler:
 #  selection:
-#    normal: [avsox, javdb, javlib, jav321, mgstage, prestige]
+#    normal: [avsox, javdb, javlib, mgstage, prestige]
 #    fc2: [fc2, javdb, javmenu, fc2ppvdb]
 
 # --- 文件整理设置 ---

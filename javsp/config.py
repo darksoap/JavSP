@@ -39,7 +39,6 @@ class CrawlerID(StrEnum):
     fc2fan = "fc2fan"
     fc2ppvdb = "fc2ppvdb"
     gyutto = "gyutto"
-    jav321 = "jav321"
     javbus = "javbus"
     javdb = "javdb"
     javlib = "javlib"
