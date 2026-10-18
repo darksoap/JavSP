@@ -2,6 +2,9 @@
 # ============================================================================
 # 这是默认配置文件，请勿直接修改！
 #
+# 本文件会随程序一同发布，升级时将被覆盖；请勿把你的自定义写在这里。
+# 它同时也是程序运行时的基线：各字段的默认值都定义在此，删除或写错可能导致启动失败。
+#
 # 自定义配置请编辑同目录下的 config.yml，只需写你要修改的部分即可，
 # 未写的字段会自动使用本文件的默认值。
 # 例如，只修改代理地址和输入目录：
@@ -44,7 +47,6 @@ network:
   # 各个站点的免代理地址。地址失效时软件会自动尝试获取新地址，你也可以手动设置
   proxy_free:
     avsox: 'https://avsox.click'
-    javbus: 'https://www.seejav.cyou'
     javdb: 'https://javdb368.com'
     javlib: 'https://www.c97k.com'
   # 网络问题导致抓取数据失败时的重试次数，通常3次就差不多了
@@ -57,8 +59,11 @@ network:
 crawler:
   # 要使用的爬虫列表（汇总数据时从前到后进行）
   # avsox avwiki fanza fc2 fc2fan javbus javdb javlib javmenu jav321 mgstage prestige
+  # 注: javbus 默认不启用（同时已从上方 proxy_free 中移除）。JavBus 已上线 driver-verify 年龄/浏览器验证门，
+  #     纯 HTTP 抓取器无法通过，命中时会返回干净的"站点被屏蔽"提示。若日后接入真实浏览器方案，
+  #     可将 javbus 加回 normal 列表（javbus.py 在未配置 proxy_free 时会回退到正站 www.javbus.com）。
   selection:
-    normal: [avsox, javbus, javdb, javlib, jav321, mgstage, prestige]
+    normal: [avsox, javdb, javlib, jav321, mgstage, prestige]
     fc2: [fc2, avsox, javdb, javmenu, fc2ppvdb]
     cid: [fanza]
     getchu: [dl_getchu]

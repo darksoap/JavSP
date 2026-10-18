@@ -13,7 +13,8 @@ permanent_url = "https://www.javbus.com"
 if Cfg().network.proxy_server is not None:
     base_url = permanent_url
 else:
-    base_url = str(Cfg().network.proxy_free[CrawlerID.javbus])
+    # javbus 默认已从 proxy_free 中移除（站点已启用 driver-verify），未配置时回退到正站，避免导入即报错
+    base_url = str(Cfg().network.proxy_free.get(CrawlerID.javbus, permanent_url))
 
 _SITE = "javbus"
 
@@ -46,15 +47,24 @@ def parse_data(movie: MovieInfo):
     resp = request_get(url, delay_raise=True)
     if is_cloudflare_challenge(resp):
         raise SiteBlocked(f"JavBus: 无法通过CloudFlare检测: {url}")
-    # 疑似JavBus检测到类似爬虫的行为时会要求登录，不过发现目前不需要登录也可以从重定向前的网页中提取信息
-    if resp.history and resp.history[0].status_code == 302:
-        html = resp2html(resp.history[0])
-    else:
-        html = resp2html(resp)
+    # 疑似JavBus检测到类似爬虫的行为时会要求登录，不过发现目前不需要登录也可以从重定向前的网页中提取信息。
+    # 但正常的重定向（如免代理镜像域名跳转、http→https）其 302 响应体通常为空，直接解析会触发
+    # lxml 的 "Document is empty"，因此仅当重定向前页面确有内容时才使用它，否则回退到最终响应。
+    source = resp
+    if resp.history and resp.history[0].status_code == 302 and resp.history[0].content.strip():
+        source = resp.history[0]
+    if not source.content.strip():
+        raise SiteBlocked(f"JavBus: 返回内容为空，可能需要登录或被反爬拦截: {url}")
+    html = resp2html(source)
     # 引入登录验证后状态码不再准确，因此还要额外通过检测标题来确认是否发生了404
     page_title = html.xpath(XP["page_title"])
     if page_title and page_title[0].startswith("404 Page Not Found!"):
         raise MovieNotFoundError(__name__, movie.dvdid)
+    # JavBus 对非浏览器客户端会 302 跳转到年龄/驱动验证页(/doc/driver-verify)，该页依赖 JS 执行才能通过，
+    # 纯 requests/curl 无法获取真实数据。此处显式识别并抛出 SiteBlocked，避免后续因缺少数据容器而报含糊的错误。
+    title_text = page_title[0] if page_title else ""
+    if "driver-verify" in source.url or title_text.startswith("Age Verification"):
+        raise SiteBlocked(f"JavBus: 遇到年龄/驱动验证页，需真实浏览器通过验证: {url}")
 
     container = xpath_first(html, XP["container"], label=_SITE)
     title = xpath_first(container, XP["title"], label=_SITE)
