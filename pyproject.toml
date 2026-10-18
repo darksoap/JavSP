@@ -16,7 +16,7 @@ dependencies = [
     "curl_cffi>=0.15",
     "colorama>=0.4.6",
     "pillow>=12.0",
-    "requests>=2.32",
+    "requests[socks]>=2.32",
     "tqdm>=4.67",
     # https://stackoverflow.com/questions/446209/possible-values-from-sys-platform
     "pywin32>=311; sys_platform == 'win32'",
