@@ -99,9 +99,7 @@ def parse_data(movie: MovieInfo):
 
     # 判断是否无码
     uncensored_arr = magnet + [title]
-    for uncensored_str in uncensored_arr:
-        if "uncensored" in uncensored_str.lower():
-            uncensored = True
+    movie.uncensored = any("uncensored" in s.lower() for s in uncensored_arr)
 
     movie.url = url
     movie.title = title
