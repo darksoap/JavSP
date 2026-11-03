@@ -44,7 +44,8 @@ def parse_data(movie: MovieInfo):
         movie (MovieInfo): 要解析的影片信息，解析后的信息直接更新到此变量内
     """
     url = f"{base_url}/{movie.dvdid}"
-    resp = request_get(url, delay_raise=True)
+    # 通过 cookies 跳过年龄验证
+    resp = request_get(url, delay_raise=True, cookies={"dv": "1", "age": "verified"})
     if is_cloudflare_challenge(resp):
         raise SiteBlocked(f"JavBus: 无法通过CloudFlare检测: {url}")
     # 疑似JavBus检测到类似爬虫的行为时会要求登录，不过发现目前不需要登录也可以从重定向前的网页中提取信息。
