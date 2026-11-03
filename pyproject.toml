@@ -25,6 +25,7 @@ dependencies = [
     "confz>=2.0.1",
     "pydantic-extra-types>=2.9.0",
     "pendulum>=3.2.0",
+    "PySocks>=1.7.1"
 ]
 
 [project.optional-dependencies]
