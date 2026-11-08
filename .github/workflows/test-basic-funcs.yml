@@ -44,7 +44,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Run unit tests
-        run: uv run pytest unittest/test_avid.py unittest/test_file.py unittest/test_func.py
+        run: uv run pytest unittest/test_avid.py unittest/test_file.py unittest/test_func.py unittest/test_primary_crawlers.py
 
       - name: Upload log as artifact
         uses: actions/upload-artifact@v7

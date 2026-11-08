@@ -245,11 +245,18 @@ def parse_data(movie: MovieInfo):
         # 判定影片有码/无码
         subsite = pre_id.split("?")[0]
         movie.uncensored = {"uncensored": True, "tags": False}.get(subsite)
-    # JavDB目前同时提供男女优信息，根据用来标识性别的符号筛选出女优
+    # 新版以 actor-female class 标记女优，旧版在演员链接后使用 ♀ 符号。
+    # 逐个检查链接及其紧邻的性别标记，避免缺少标记时名字与性别错位。
     actors_tag = xpath_first(info, XP["info_actor"], label=_SITE)
-    all_actors = actors_tag.xpath("a/text()")
-    genders = actors_tag.xpath("strong/text()")
-    actress = [actor for actor, gender in zip(all_actors, genders) if gender == "♀"]
+    actress = []
+    for actor in actors_tag.xpath("a"):
+        gender = actor.getnext()
+        if "actor-female" in actor.get("class", "").split() or (
+            gender is not None and gender.tag == "strong" and gender.text_content().strip() == "♀"
+        ):
+            name = actor.text_content().strip()
+            if name:
+                actress.append(name)
     magnet = container.xpath(XP["magnet"])
 
     movie.dvdid = dvdid
