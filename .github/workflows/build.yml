@@ -1,4 +1,4 @@
-name: "Cx_Freeze"
+name: "Build binaries (no release)"
 
 on:
   push:
@@ -25,6 +25,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      max-parallel: 3
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 

@@ -14,7 +14,7 @@
 
 ![Python 3.14](https://img.shields.io/badge/python-3.14-green.svg)
 [![稳定版](https://img.shields.io/github/v/release/darksoap/JavSP)](https://github.com/darksoap/JavSP/releases/latest)
-[![尝鲜版 (CI)](https://img.shields.io/github/actions/workflow/status/darksoap/JavSP/cx_freeze.yml?label=%E5%B0%9D%E9%B2%9C%E7%89%88%20%28CI%29)](https://github.com/darksoap/JavSP/actions/workflows/cx_freeze.yml)
+[![尝鲜版 (CI)](https://img.shields.io/github/actions/workflow/status/darksoap/JavSP/build.yml?label=%E5%B0%9D%E9%B2%9C%E7%89%88%20%28CI%29)](https://github.com/darksoap/JavSP/actions/workflows/build.yml)
 ![License](https://img.shields.io/github/license/Yuukiy/JavSP)
 [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
