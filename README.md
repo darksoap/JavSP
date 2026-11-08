@@ -14,7 +14,7 @@
 
 ![Python 3.14](https://img.shields.io/badge/python-3.14-green.svg)
 [![稳定版](https://img.shields.io/github/v/release/darksoap/JavSP)](https://github.com/darksoap/JavSP/releases/latest)
-[![尝鲜版 (CI)](https://img.shields.io/github/actions/workflow/status/yozurukt/JavSP/build.yml?label=%E5%B0%9D%E9%B2%9C%E7%89%88%20%28CI%29)](https://github.com/yozurukt/JavSP/actions/workflows/build.yml)
+[![尝鲜版 (CI)](https://img.shields.io/github/actions/workflow/status/darksoap/JavSP/build.yml?label=%E5%B0%9D%E9%B2%9C%E7%89%88%20%28CI%29)](https://github.com/darksoap/JavSP/actions/workflows/build.yml)
 ![License](https://img.shields.io/github/license/Yuukiy/JavSP)
 [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
 [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
@@ -55,25 +55,6 @@
 更详细的使用说明请前往 [JavSP Wiki](https://github.com/Yuukiy/JavSP/wiki) 查看
 
 如果使用的时候遇到问题也欢迎给我反馈😊
-
-## 构建未发布版本
-
-仓库提供 **Build binaries (no release)** 工作流，无需创建标签或 Release 即可打包两个正式版本之间的代码。
-
-1. 打开仓库的 **Actions → Build binaries (no release) → Run workflow**。
-2. 在 `ref` 中填写要构建的分支、标签或提交 SHA；留空时构建 **Use workflow from** 所选分支。
-3. 在 `platform` 中选择 `windows`、`linux`、`macos` 或 `all`，然后启动构建。
-4. 构建完成后，在该次运行页面底部的 **Artifacts** 下载对应平台的压缩包。
-
-Windows 产物为 `.zip`，Linux/macOS 为 `.tar.gz`，解压后即可运行；文件名包含版本号、提交 SHA 前 7 位及系统架构，便于区分中间版本。产物保留 30 天，不会创建 Release。推送到 `master` 或向其提交 PR 时也会自动构建。
-
-也可以使用 GitHub CLI，例如构建 `master` 的 Windows 版本：
-
-```bash
-gh workflow run build.yml -f ref=master -f platform=windows
-```
-
-工作流修改需先进入仓库默认分支 `master`，才能在 GitHub 上使用手动构建入口。
 
 ## 问题反馈
 

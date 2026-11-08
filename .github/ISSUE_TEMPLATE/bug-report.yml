@@ -54,7 +54,7 @@ body:
     id: promise
     attributes:
       label: 提交须知
-      description: 提交问题前，请确认你使用的是[最新版本](https://github.com/yozurukt/JavSP/actions/workflows/build.yml)
+      description: 提交问题前，请确认你使用的是[最新版本](https://github.com/darksoap/JavSP/actions/workflows/build.yml)
       options:
         - label: 我确认已经搜索过Issue区，没有与我遇到的情况相同的Issue。
           required: true
