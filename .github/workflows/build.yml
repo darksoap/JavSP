@@ -1,0 +1,102 @@
+name: "Build binaries (no release)"
+run-name: Build ${{ inputs.ref || github.ref_name }} (${{ inputs.platform || 'all' }})
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'unittest/data/*.json'
+      - '**/*.md'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - 'unittest/data/*.json'
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "要构建的分支、标签或提交 SHA；留空使用所选分支"
+        required: false
+        type: string
+      platform:
+        description: "构建平台"
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - windows
+          - linux
+          - macos
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-binaries-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  build:
+    name: Build binaries on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        os: >-
+          ${{ fromJSON(
+            inputs.platform == 'windows' && '["windows-latest"]' ||
+            inputs.platform == 'linux' && '["ubuntu-latest"]' ||
+            inputs.platform == 'macos' && '["macos-latest"]' ||
+            '["ubuntu-latest", "windows-latest", "macos-latest"]'
+          ) }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.ref }}
+
+      - name: Run freeze build
+        id: freeze
+        uses: ./.github/actions/freeze-build
+        with:
+          version-source: tool
+
+      - name: Package binaries
+        id: package
+        shell: bash
+        env:
+          BUILD_VERSION: ${{ steps.freeze.outputs.version }}
+        run: |
+          uv run python - <<'PY'
+          import os
+          import shutil
+          import subprocess
+          from pathlib import Path
+
+          version = os.environ["BUILD_VERSION"]
+          commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          platform = f'{os.environ["RUNNER_OS"]}-{os.environ["RUNNER_ARCH"]}'
+          name = f"JavSP-{version}-{commit[:7]}-{platform}"
+          archive_format = "zip" if os.environ["RUNNER_OS"] == "Windows" else "gztar"
+          archive = shutil.make_archive(name, archive_format, root_dir="dist")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"path={Path(archive).name}\n")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write(f"### {platform}\n\nVersion: `{version}`\n\nCommit: `{commit}`\n\n")
+              summary.write(f"Download `{Path(archive).name}` from this run's Artifacts.\n")
+          PY
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.package.outputs.path }}
+          archive: false
+          if-no-files-found: error
+          retention-days: 30

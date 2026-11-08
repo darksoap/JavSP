@@ -16,7 +16,7 @@ body:
     id: promise
     attributes:
       label: 提交须知
-      description: 提交问题前，请确认你使用的是[最新版本](https://github.com/darksoap/JavSP/actions/workflows/cx_freeze.yml)并且已经阅读过[Wiki帮助文档](https://github.com/Yuukiy/JavSP/wiki)
+      description: 提交问题前，请确认你使用的是[最新版本](https://github.com/yozurukt/JavSP/actions/workflows/build.yml)并且已经阅读过[Wiki帮助文档](https://github.com/Yuukiy/JavSP/wiki)
       options:
         - label: 我确认使用的是最新版本
           required: true
